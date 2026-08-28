@@ -2,16 +2,19 @@
 
 **Last updated: 2026-08-28**
 
-Unofficial local gateway: **your** WorkBuddy / Tencent account → OpenAI-compatible `/v1/chat/completions` for Hermes, OpenCode, Cursor, Codex, or curl.
+Unofficial local gateway: **your** WorkBuddy / Tencent account → OpenAI-compatible `/v1` for Hermes, OpenCode, Cursor, Codex, or curl.
 
 No pip packages required. Python 3.10+.
 
-This is not a Tencent product. It talks to the same SaaS the official WorkBuddy desktop app uses (`www.workbuddy.ai`) with a session you create by logging in.
+This is not a Tencent product. It talks to the same SaaS the official WorkBuddy desktop app uses (`www.workbuddy.ai`) with a session **you** create by logging in.
 
-## Clone and run
+**Repo:** https://github.com/owenisas/workbuddy-openai-gateway  
+**How-to (Hermes / OpenCode / Cursor / curl):** [docs/USAGE.md](docs/USAGE.md)
+
+## Quick start
 
 ```bash
-git clone <this-repo> workbuddy-openai-gateway
+git clone https://github.com/owenisas/workbuddy-openai-gateway.git
 cd workbuddy-openai-gateway
 
 # 1. Sign in (opens a browser; use your WorkBuddy / Tencent account)
@@ -20,10 +23,18 @@ python3 -m workbuddy_openai login
 # already have the WorkBuddy desktop app logged in on this Mac?
 python3 -m workbuddy_openai login --import-desktop
 
-# 2. Serve
+# 2. Serve (keep this running)
 python3 -m workbuddy_openai serve
-# OpenAI-compatible gateway on http://127.0.0.1:8787/v1
+# → http://127.0.0.1:8787/v1
 ```
+
+Then point any OpenAI client at:
+
+| | |
+|---|---|
+| Base URL | `http://127.0.0.1:8787/v1` |
+| API key | any string (optional lock: `--api-key` / `WORKBUDDY_GATEWAY_KEY`) |
+| Model | `hy4-preview` (free when Tencent marks it so), or `python3 -m workbuddy_openai models` |
 
 Session file (mode `0600`): `~/.workbuddy-openai/session.json`. Tokens never go to stdout.
 
@@ -33,14 +44,9 @@ python3 -m workbuddy_openai models    # live catalog from /v3/config
 python3 -m workbuddy_openai logout
 ```
 
-## Point an agent at it
+## Hermes (one snippet)
 
-Base URL: `http://127.0.0.1:8787/v1`  
-API key: any string (or set `WORKBUDDY_GATEWAY_KEY` / `--api-key` to require one)
-
-### Hermes
-
-Do **not** change your default model unless you want to. Add a provider:
+Do **not** change your default model unless you want to. Add a provider (full file: `examples/hermes-provider.yaml`):
 
 ```yaml
 providers:
@@ -59,29 +65,13 @@ providers:
       - deep-model
 ```
 
-Then `/model workbuddy/hy4-preview`. Copy `examples/hermes-provider.yaml`.
+`/model workbuddy/hy4-preview` while `serve` is running.
 
-Keep `python3 -m workbuddy_openai serve` running. Hermes talks to localhost only.
-
-### OpenCode
-
-See `examples/opencode.json`. Custom provider `workbuddy` at `http://127.0.0.1:8787/v1`.
-
-### curl
-
-```bash
-curl -s http://127.0.0.1:8787/v1/models | python3 -m json.tool
-
-curl -s http://127.0.0.1:8787/v1/chat/completions \
-  -H 'content-type: application/json' \
-  -d '{"model":"hy4-preview","messages":[{"role":"user","content":"Say hi in one word."}]}'
-```
-
-The gateway accepts both `stream: true` (SSE) and `stream: false` (JSON). Upstream WorkBuddy is stream-only; non-stream is buffered here.
+OpenCode: `examples/opencode.json`. curl: `examples/curl.sh`. More copy-paste recipes in [docs/USAGE.md](docs/USAGE.md).
 
 ## What login does
 
-WorkBuddy’s official flow (`cli-external-link`):
+WorkBuddy’s official `cli-external-link` flow:
 
 1. `POST /v2/plugin/auth/state?platform=workbuddy-ai` → `{state, authUrl}`
 2. Open `https://www.workbuddy.ai/login?platform=workbuddy-ai&state=…`
@@ -118,7 +108,8 @@ workbuddy_openai/     stdlib package
   upstream.py         /v3/config + /v2/chat/completions
   server.py           /v1/models + /v1/chat/completions (HTTP/1.0)
   cli.py
-examples/             Hermes + OpenCode snippets
+docs/USAGE.md         Hermes / OpenCode / Cursor / curl
+examples/
 tests/
 ```
 
