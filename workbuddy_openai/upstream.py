@@ -80,13 +80,9 @@ def alias_map(cfg: dict[str, Any]) -> dict[str, str]:
             mapping[name.lower()] = mid
             mapping[name.lower().replace(" ", "-")] = mid
             mapping[name.lower().replace(" ", "")] = mid
-    # Screenshot / common aliases
-    mapping.setdefault("hy4", mapping.get("hy4-preview", "hy4-preview"))
-    mapping.setdefault("hy4 preview", mapping.get("hy4-preview", "hy4-preview"))
     mapping.setdefault("fast", mapping.get("fast-model", "fast-model"))
     mapping.setdefault("balanced", mapping.get("balanced-model", "balanced-model"))
     mapping.setdefault("primary", mapping.get("primary-model", "primary-model"))
-    mapping.setdefault("ultimate", mapping.get("deep-model", "deep-model"))
     mapping.setdefault("deep", mapping.get("deep-model", "deep-model"))
     mapping.setdefault("auto", mapping.get("default-model", "default-model"))
     return mapping
@@ -95,7 +91,7 @@ def alias_map(cfg: dict[str, Any]) -> dict[str, str]:
 def resolve_model(model: str, cfg: dict[str, Any] | None) -> str:
     raw = (model or "").strip()
     if not raw:
-        return "hy4-preview"
+        return "default-model"
     if not cfg:
         return raw
     return alias_map(cfg).get(raw.lower(), raw)
@@ -103,11 +99,11 @@ def resolve_model(model: str, cfg: dict[str, Any] | None) -> str:
 
 def _upstream_body(openai_body: dict[str, Any], cfg: dict[str, Any] | None) -> dict[str, Any]:
     messages = ensure_system(list(openai_body.get("messages") or []))
-    model = resolve_model(str(openai_body.get("model") or "hy4-preview"), cfg)
+    model = resolve_model(str(openai_body.get("model") or "default-model"), cfg)
     out: dict[str, Any] = {
         "model": model,
         "messages": messages,
-        "stream": True,  # WorkBuddy rejects non-stream (code 11101)
+        "stream": True,
     }
     max_tokens = openai_body.get("max_tokens") or openai_body.get("max_completion_tokens")
     out["max_tokens"] = int(max_tokens) if max_tokens else DEFAULT_MAX_TOKENS
@@ -218,7 +214,7 @@ def parse_sse_objects(lines: list[str]) -> dict[str, Any]:
         "id": cid or f"chatcmpl-{int(time.time())}",
         "object": "chat.completion",
         "created": int(time.time()),
-        "model": model or "hy4-preview",
+        "model": model or "default-model",
         "choices": [
             {
                 "index": 0,

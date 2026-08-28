@@ -1,19 +1,14 @@
 #!/usr/bin/env bash
-# Requires: python3 -m workbuddy_openai serve
+# Direct WorkBuddy API. Requires: python3 -m workbuddy_openai login
 set -euo pipefail
-BASE="${BASE:-http://127.0.0.1:8787/v1}"
+ENV_FILE="${WORKBUDDY_OPENAI_HOME:-$HOME/.workbuddy-openai}/env"
+# shellcheck source=/dev/null
+set -a
+. "$ENV_FILE"
+set +a
+BASE="${WORKBUDDY_BASE_URL:-https://www.workbuddy.ai/v2}"
 
-echo "== models =="
-curl -sS "$BASE/models"
-
-echo
-echo "== non-stream hy4 =="
-curl -sS "$BASE/chat/completions" \
-  -H 'content-type: application/json' \
-  -d '{"model":"hy4-preview","messages":[{"role":"user","content":"Reply with the single word PONG."}]}'
-
-echo
-echo "== stream =="
 curl -sS -N "$BASE/chat/completions" \
+  -H "Authorization: Bearer $WORKBUDDY_ACCESS_TOKEN" \
   -H 'content-type: application/json' \
-  -d '{"model":"hy4-preview","stream":true,"messages":[{"role":"user","content":"Reply with the single word PONG."}]}'
+  -d '{"model":"default-model","stream":true,"messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Say hi in one word."}]}'

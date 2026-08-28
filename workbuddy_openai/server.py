@@ -149,7 +149,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             session = _load_session()
             cfg = _config()
-            body["model"] = resolve_model(str(body.get("model") or "hy4-preview"), cfg)
+            body["model"] = resolve_model(str(body.get("model") or "default-model"), cfg)
             with _session_lock:
                 session, source = chat_stream(session, body, cfg)
         except HttpError as e:
@@ -213,7 +213,7 @@ def serve(
 ) -> None:
     Handler.gateway_key = gateway_key or ""
     httpd = ThreadingHTTPServer((host, port), Handler)
-    print(f"OpenAI-compatible gateway on http://{host}:{port}/v1", flush=True)
+    print(f"optional local shim on http://{host}:{port}/v1  (prefer https://www.workbuddy.ai/v2 directly)", flush=True)
     print(f"  GET  /v1/models", flush=True)
     print(f"  POST /v1/chat/completions", flush=True)
     print(f"  GET  /health", flush=True)

@@ -1,4 +1,3 @@
-import json
 import unittest
 
 from workbuddy_openai.upstream import ensure_system, parse_sse_objects, resolve_model
@@ -18,15 +17,15 @@ class EnsureSystemTests(unittest.TestCase):
 class SseParseTests(unittest.TestCase):
     def test_assembles_content_and_usage(self):
         lines = [
-            "data: {\"id\":\"cmb-1\",\"model\":\"hy4-preview\",\"choices\":[{\"delta\":{\"role\":\"assistant\",\"content\":\"\"}}]}\n",
-            "data: {\"choices\":[{\"delta\":{\"content\":\"32\"}}]}\n",
-            "data: {\"choices\":[{\"delta\":{\"content\":\"3\"},\"finish_reason\":\"stop\"}],\"usage\":{\"credit\":0,\"total_tokens\":10}}\n",
+            'data: {"id":"cmb-1","model":"default-model","choices":[{"delta":{"role":"assistant","content":""}}]}\n',
+            'data: {"choices":[{"delta":{"content":"32"}}]}\n',
+            'data: {"choices":[{"delta":{"content":"3"},"finish_reason":"stop"}],"usage":{"credit":0,"total_tokens":10}}\n',
             "data: [DONE]\n",
         ]
         out = parse_sse_objects(lines)
         self.assertEqual(out["choices"][0]["message"]["content"], "323")
         self.assertEqual(out["choices"][0]["finish_reason"], "stop")
-        self.assertEqual(out["model"], "hy4-preview")
+        self.assertEqual(out["model"], "default-model")
         self.assertEqual(out["usage"]["credit"], 0)
 
     def test_reasoning_kept_separate(self):
@@ -41,11 +40,11 @@ class SseParseTests(unittest.TestCase):
 
 
 class AliasTests(unittest.TestCase):
-    def test_hy4_alias(self):
-        cfg = {"models": [{"id": "hy4-preview", "name": "Hy4 preview"}]}
-        self.assertEqual(resolve_model("hy4", cfg), "hy4-preview")
-        self.assertEqual(resolve_model("Hy4 preview", cfg), "hy4-preview")
-        self.assertEqual(resolve_model("ultimate", {"models": [{"id": "deep-model", "name": "Deep"}]}), "deep-model")
+    def test_catalog_aliases(self):
+        cfg = {"models": [{"id": "fast-model", "name": "Fast"}, {"id": "default-model", "name": "Default"}]}
+        self.assertEqual(resolve_model("fast", cfg), "fast-model")
+        self.assertEqual(resolve_model("", cfg), "default-model")
+        self.assertEqual(resolve_model("auto", cfg), "default-model")
 
 
 if __name__ == "__main__":

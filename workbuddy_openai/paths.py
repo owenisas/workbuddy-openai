@@ -33,6 +33,10 @@ def session_path() -> Path:
     return config_dir() / "session.json"
 
 
+def env_path() -> Path:
+    return config_dir() / "env"
+
+
 def first_desktop_session() -> Path | None:
     for p in DESKTOP_AUTH_CANDIDATES:
         if p.is_file():

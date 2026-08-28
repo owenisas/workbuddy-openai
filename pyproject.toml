@@ -1,7 +1,7 @@
 [project]
 name = "workbuddy-openai"
-version = "0.1.0"
-description = "BYO WorkBuddy/Tencent account → local OpenAI-compatible gateway"
+version = "0.2.0"
+description = "Log in to WorkBuddy, then call https://www.workbuddy.ai/v2 from Hermes/OpenCode"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

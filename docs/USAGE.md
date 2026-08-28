@@ -2,114 +2,93 @@
 
 **Last updated: 2026-08-28**
 
-Local OpenAI-compatible API in front of **your** WorkBuddy / Tencent login. Keep `python3 -m workbuddy_openai serve` running while any agent uses it.
+Login locally, then call `https://www.workbuddy.ai/v2` as an OpenAI-compatible base URL. No localhost server required.
 
 Clone: https://github.com/owenisas/workbuddy-openai-gateway
 
 ```bash
 git clone https://github.com/owenisas/workbuddy-openai-gateway.git
 cd workbuddy-openai-gateway
-python3 -m workbuddy_openai login          # browser OAuth from zero
-# python3 -m workbuddy_openai login --import-desktop   # Mac, app already signed in
-python3 -m workbuddy_openai serve          # http://127.0.0.1:8787/v1
+python3 -m workbuddy_openai login
+python3 -m workbuddy_openai snippet hermes
 ```
 
 | Client field | Value |
 |---|---|
-| Base URL | `http://127.0.0.1:8787/v1` |
-| API key | `workbuddy-local` (anything; lock with `--api-key` if you want) |
-| Chat | `POST /v1/chat/completions` |
-| Models | `GET /v1/models` |
+| Base URL | `https://www.workbuddy.ai/v2` |
+| API key | `WORKBUDDY_ACCESS_TOKEN` from `~/.workbuddy-openai/env` |
+| Chat | `POST /chat/completions` with `stream: true` |
+| Models | `python3 -m workbuddy_openai models` |
 
-Free-when-promoted model id: `hy4-preview` (alias `hy4`). List live ids: `python3 -m workbuddy_openai models`.
-
----
-
-## 1. Hermes Agent
-
-1. Start the gateway.
-2. Add the block in `examples/hermes-provider.yaml` under `providers:` in the **active profile** config. Do not change `model.default` unless you want WorkBuddy as the session default.
-3. Restart Hermes (or open a new session) so the provider is picked up.
-4. `/model workbuddy/hy4-preview`
-
-Profile note: if you run the `pa` profile, keys/providers live in that profile’s `config.yaml`, not the global one.
-
-## 2. OpenCode
-
-Merge `examples/opencode.json` into `~/.config/opencode/opencode.json` (or the project `opencode.json`). `modalities.input: [text, image]` is required for vision; `attachment: true` alone is not enough.
-
-Select model `workbuddy/hy4-preview`.
-
-## 3. Cursor / any OpenAI-compatible harness
-
-Provider type: OpenAI compatible.
-
-- Base URL: `http://127.0.0.1:8787/v1`
-- Key: `workbuddy-local`
-- Model: `hy4-preview`
-
-Some UIs want the base URL **without** `/v1` and append it themselves. If `/v1/v1/chat/completions` 404s, drop the trailing `/v1`.
-
-## 4. curl / Python
-
-```bash
-curl -s http://127.0.0.1:8787/v1/models | python3 -m json.tool
-
-curl -s http://127.0.0.1:8787/v1/chat/completions \
-  -H 'content-type: application/json' \
-  -d '{"model":"hy4-preview","messages":[{"role":"user","content":"Say hi in one word."}]}'
-```
-
-Streaming:
-
-```bash
-curl -N http://127.0.0.1:8787/v1/chat/completions \
-  -H 'content-type: application/json' \
-  -d '{"model":"hy4-preview","stream":true,"messages":[{"role":"user","content":"Say hi in one word."}]}'
-```
-
-Python (`openai` SDK optional):
-
-```python
-from openai import OpenAI
-c = OpenAI(base_url="http://127.0.0.1:8787/v1", api_key="workbuddy-local")
-print(c.chat.completions.create(
-    model="hy4-preview",
-    messages=[{"role": "user", "content": "Say hi in one word."}],
-).choices[0].message.content)
-```
-
-Script: `examples/curl.sh`.
+Put the token in the harness env. Do not paste it into git.
 
 ---
+
+## Hermes Agent
+
+1. `python3 -m workbuddy_openai login`
+2. Copy `WORKBUDDY_ACCESS_TOKEN` from `~/.workbuddy-openai/env` into the **active profile** `.env`.
+3. Add the `providers.workbuddy` block from `python3 -m workbuddy_openai snippet hermes` (or `examples/hermes-provider.yaml`). Leave `model.default` alone unless you want this as the session default.
+4. New Hermes session → `/model workbuddy/default-model`
+
+Profile note: `pa` reads `~/.hermes/profiles/pa/config.yaml` + that profile’s `.env`, not the global files.
+
+## OpenCode
+
+Merge `examples/opencode.json` (or `python3 -m workbuddy_openai snippet opencode`). Set the API key from `WORKBUDDY_ACCESS_TOKEN`. Select `workbuddy/default-model`.
+
+## Cursor / any OpenAI-compatible harness
+
+- Base URL: `https://www.workbuddy.ai/v2`
+- Key: contents of `WORKBUDDY_ACCESS_TOKEN`
+- Model: `default-model`
+
+If the UI appends `/v1` itself and you get `/v2/v1/...` 404s, use `https://www.workbuddy.ai` as the host and `/v2` as the path prefix, or the full `/v2` base if the UI does not append `/v1`.
+
+Clients must **stream**. A non-stream `chat/completions` request is rejected by WorkBuddy.
+
+## curl
+
+```bash
+set -a
+# shellcheck source=/dev/null
+. "$HOME/.workbuddy-openai/env"
+set +a
+
+curl -sS -N https://www.workbuddy.ai/v2/chat/completions \
+  -H "Authorization: Bearer $WORKBUDDY_ACCESS_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"model":"default-model","stream":true,"messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Say hi in one word."}]}'
+```
+
+`examples/curl.sh` does the same.
 
 ## CLI
 
 | command | what |
 |---|---|
-| `python3 -m workbuddy_openai login` | Browser OAuth from zero |
-| `python3 -m workbuddy_openai login --no-browser` | Print URL only |
-| `python3 -m workbuddy_openai login --import-desktop` | Copy WorkBuddy desktop session |
-| `python3 -m workbuddy_openai status` | Logged-in uid/nickname/expiry (no tokens) |
-| `python3 -m workbuddy_openai models` | Live model catalog |
-| `python3 -m workbuddy_openai serve [--port 8787] [--api-key …]` | Gateway |
-| `python3 -m workbuddy_openai logout` | Delete `~/.workbuddy-openai/session.json` |
+| `login` | Browser OAuth from zero |
+| `login --no-browser` | Print URL only |
+| `login --import-desktop` | Copy WorkBuddy desktop session |
+| `status` | uid/nickname/expiry (no tokens) |
+| `refresh` | Refresh the access token |
+| `models` | Live catalog |
+| `snippet hermes\|opencode\|env` | Config text, no token values |
+| `logout` | Delete session + env file |
+| `serve` | Optional localhost shim |
 
-Env: `WORKBUDDY_OPENAI_HOME` (config dir), `WORKBUDDY_GATEWAY_KEY` (optional client Bearer).
-
----
+Env: `WORKBUDDY_OPENAI_HOME`, `WORKBUDDY_ACCESS_TOKEN`, `WORKBUDDY_BASE_URL`.
 
 ## Troubleshooting
 
-| Symptom | Cause / fix |
+| Symptom | Fix |
 |---|---|
-| `not logged in` | Run `login` in the same machine/user. Session is `~/.workbuddy-openai/session.json`. |
-| Browser never finishes | Copy the printed URL. Polling lasts 5 minutes (`11217` = still waiting). |
-| `11128` / empty replies | Gateway should inject `system`; update if you forked an old copy. |
-| Hy4 returns blank + `finish=length` | Thinking ate `max_tokens`. Raise it (gateway default is 8192). |
-| `401 invalid_token` against `copilot.tencent.com` | Overseas account. This gateway uses `www.workbuddy.ai`. |
-| Agent hangs after one SSE turn | Need HTTP/1.0 or `Connection: close` — this server already uses HTTP/1.0. |
-| Credits drop on Fast/Primary | Those are paid rows. Hy4/Hy3 are `x0.00` only while Tencent’s promo says so. |
-| Port in use | `python3 -m workbuddy_openai serve --port 8790` and change the client base URL. |
+| `not logged in` | `python3 -m workbuddy_openai login` |
+| Browser never finishes | Copy the printed URL. Polling lasts 5 minutes. |
+| `Non-stream chat request is currently not supported` | Send `stream: true` |
+| `first message is not system prompt` | First message `role` must be `system` |
+| `401 invalid_token` on `copilot.tencent.com` | Use `www.workbuddy.ai` (overseas). |
+| Empty completion + `finish=length` | Raise `max_tokens` (thinking counts). |
+| 401 after a long time | `python3 -m workbuddy_openai refresh` |
 
-Bind is `127.0.0.1` on purpose. Do not expose the port; it is your account.
+`serve` is optional. Prefer `https://www.workbuddy.ai/v2`.

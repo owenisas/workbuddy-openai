@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .paths import config_dir, session_path
+from .paths import DEFAULT_ENDPOINT, config_dir, env_path, session_path
 
 
 def _atomic_write(path: Path, payload: dict[str, Any]) -> None:
@@ -41,13 +41,24 @@ def load() -> dict[str, Any] | None:
 def save(session: dict[str, Any]) -> Path:
     config_dir().mkdir(parents=True, exist_ok=True)
     _atomic_write(session_path(), session)
+    _write_env(session)
     return session_path()
 
 
+def _write_env(session: dict[str, Any]) -> None:
+    tok = (session.get("auth") or {}).get("accessToken") or ""
+    base = str(session.get("endpoint") or DEFAULT_ENDPOINT).rstrip("/") + "/v2"
+    path = env_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = f"WORKBUDDY_ACCESS_TOKEN={tok}\nWORKBUDDY_BASE_URL={base}\n"
+    path.write_text(text, encoding="utf-8")
+    os.chmod(path, 0o600)
+
+
 def clear() -> None:
-    p = session_path()
-    if p.is_file():
-        p.unlink()
+    for p in (session_path(), env_path()):
+        if p.is_file():
+            p.unlink()
 
 
 def import_file(src: Path) -> dict[str, Any]:
@@ -71,6 +82,8 @@ def public_status(session: dict[str, Any] | None) -> dict[str, Any]:
     return {
         "logged_in": True,
         "path": str(session_path()),
+        "env_path": str(env_path()),
+        "base_url": str(session.get("endpoint") or DEFAULT_ENDPOINT).rstrip("/") + "/v2",
         "uid": account.get("uid"),
         "nickname": account.get("nickname"),
         "type": account.get("type"),
