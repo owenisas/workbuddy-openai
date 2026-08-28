@@ -4,11 +4,11 @@
 
 Login locally, then call `https://www.workbuddy.ai/v2` as an OpenAI-compatible base URL. No localhost server required.
 
-Clone: https://github.com/owenisas/workbuddy-openai-gateway
+Clone: https://github.com/owenisas/workbuddy-openai
 
 ```bash
-git clone https://github.com/owenisas/workbuddy-openai-gateway.git
-cd workbuddy-openai-gateway
+git clone https://github.com/owenisas/workbuddy-openai.git
+cd workbuddy-openai
 python3 -m workbuddy_openai login
 python3 -m workbuddy_openai snippet hermes
 ```

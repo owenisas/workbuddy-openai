@@ -5,7 +5,7 @@ description = "Log in to WorkBuddy, then call https://www.workbuddy.ai/v2 from H
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "workbuddy-openai-gateway" }]
+authors = [{ name = "workbuddy-openai" }]
 dependencies = []
 
 [project.scripts]

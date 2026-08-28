@@ -10,14 +10,14 @@ https://www.workbuddy.ai/v2
 
 Python 3.10+. No pip packages. Unofficial; not a Tencent product.
 
-**Repo:** https://github.com/owenisas/workbuddy-openai-gateway  
+**Repo:** https://github.com/owenisas/workbuddy-openai  
 **Harness recipes:** [docs/USAGE.md](docs/USAGE.md)
 
 ## Quick start
 
 ```bash
-git clone https://github.com/owenisas/workbuddy-openai-gateway.git
-cd workbuddy-openai-gateway
+git clone https://github.com/owenisas/workbuddy-openai.git
+cd workbuddy-openai
 
 python3 -m workbuddy_openai login                 # browser OAuth
 # python3 -m workbuddy_openai login --import-desktop   # Mac, desktop app already signed in
