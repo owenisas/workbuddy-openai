@@ -1,0 +1,27 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "workbuddy": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "WorkBuddy",
+      "options": {
+        "baseURL": "http://127.0.0.1:8787/v1",
+        "apiKey": "workbuddy-local"
+      },
+      "models": {
+        "hy4-preview": {
+          "name": "Hy4 preview",
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "hy3": {
+          "name": "Hy3",
+          "modalities": { "input": ["text", "image"], "output": ["text"] }
+        },
+        "fast-model": { "name": "Fast" },
+        "balanced-model": { "name": "Balanced" },
+        "primary-model": { "name": "Primary" },
+        "deep-model": { "name": "Ultimate / Deep" }
+      }
+    }
+  }
+}
